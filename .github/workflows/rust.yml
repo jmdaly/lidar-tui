@@ -40,3 +40,45 @@ jobs:
 
       - name: Check for clippy warnings
         run: cargo clippy --locked --workspace --all-targets --no-deps --all-features -- -D warnings
+
+  code-coverage:
+    runs-on: ubuntu-latest
+    container:
+      image: rust:latest
+      # https://github.com/actions/checkout/issues/1014#issuecomment-1369355566
+      options: --user root
+    env:
+      RUSTFLAGS: -Cinstrument-coverage
+      LLVM_PROFILE_FILE: ${{ github.event.repository.name }}-%p-%m.profraw
+    # Needed to write a coverage report to the PR
+    permissions: write-all
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run tests with coverage
+        run: |
+          cargo test --locked
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: grcov@0.8
+
+      - name: Install genhtml
+        run: apt-get install -y lcov
+
+      - name: Generate LCOV coverage file
+        run: |
+          grcov . \
+            --branch -s . --binary-path ./target/ \
+            -t lcov -o coverage.lcov \
+            --keep-only "crates/**" --ignore-not-existing
+
+      - name: Report code coverage
+        uses: zgosalvez/github-actions-report-lcov@v4
+        with:
+          coverage-files: coverage.lcov
+          minimum-coverage: ${{ env.COVERAGE_THRESHOLD }}
+          artifact-name: code-coverage-report
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          update-comment: true
