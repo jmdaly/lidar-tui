@@ -1,0 +1,17 @@
+{
+    "image": "rust:latest",
+    "containerUser": "vscode",
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": "true",
+            "installOhMyZsh": "false",
+            "username": "vscode",
+            "userUid": "1000",
+            "userGid": "1000",
+            "upgradePackages": "true"
+        },
+    },
+    "runArgs": [
+        "--name=${localWorkspaceFolderBasename}_${localEnv:USER}"
+  ]
+}
