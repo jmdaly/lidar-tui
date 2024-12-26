@@ -7,3 +7,4 @@ edition = "2021"
 pedantic = "warn"
 
 [dependencies]
+mdns-sd = "0.13.1"
