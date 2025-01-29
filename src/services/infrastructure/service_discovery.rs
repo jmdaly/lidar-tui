@@ -123,7 +123,7 @@ impl MdnsDiscovery {
 }
 
 impl MdnsDiscoveryTrait<MdnsServiceEventReceiver> for MdnsDiscovery {
-    fn browse(&self, service_type: &str) -> Result<MdnsServiceEventReceiver, Box<dyn Error>> {
+    fn browse(&self, _service_type: &str) -> Result<MdnsServiceEventReceiver, Box<dyn Error>> {
         // Ok(self.0.browse(service_type)?)
         Err("Not implemented".into())
     }
