@@ -11,6 +11,7 @@ use mdns_sd::ServiceInfo;
 ///
 /// `AppServiceEvent` is an interface wrapper over the [`ServiceEvent`](mdns_sd::ServiceEvent) enumeration
 /// from the `mdns-sd` crate, providing a simplified and application-specific view of service discovery events.
+#[derive(Debug, PartialEq)]
 enum AppServiceEvent {
     SearchStarted(String),
     ServiceFound(String, String),
@@ -65,11 +66,13 @@ impl ServiceEventReceiver for MdnsServiceEventReceiver {
 /// `StubServiceEventReceiver` is a stub implementation of the `ServiceEventReceiver` trait.
 /// It is designed for use in testing scenarios where actual service discovery is not required
 /// and provides a predictable stream of `AppServiceEvent`s.
-struct StubServiceEventReceiver {}
+struct StubServiceEventReceiver {
+    service_type: String
+}
 
 impl ServiceEventReceiver for StubServiceEventReceiver {
     fn receive(&self) -> Result<AppServiceEvent, Box<dyn Error>> {
-        Ok(AppServiceEvent::SearchStarted("test".to_string()))
+        Ok(AppServiceEvent::SearchStarted(self.service_type.clone()))
     }
 }
 
@@ -112,8 +115,10 @@ impl MdnsDiscoveryTrait<MdnsServiceEventReceiver> for MdnsDiscovery {
 struct StubMdnsDiscovery {}
 
 impl MdnsDiscoveryTrait<StubServiceEventReceiver> for StubMdnsDiscovery {
-    fn browse(&self, _service_type: &str) -> Result<StubServiceEventReceiver, Box<dyn Error>> {
-        Err("Not implemented".into())
+    fn browse(&self, service_type: &str) -> Result<StubServiceEventReceiver, Box<dyn Error>> {
+        Ok(StubServiceEventReceiver {
+            service_type: service_type.to_string()
+        })
     }
 }
 
@@ -179,6 +184,31 @@ mod tests {
         let service_discovery = ServiceDiscovery::new_null();
 
         let services = service_discovery.browse("no_services._tcp.local.");
-        assert!(services.is_err());
+        assert!(services.is_ok());
+    }
+
+    #[test]
+    fn test_successful_service_discovery_with_stub() {
+        // Create a ServiceDiscovery instance with stub implementations
+        let service_discovery = ServiceDiscovery::new_null();
+
+        // Call the browse method with a test service type
+        let receiver_result = service_discovery.browse("_test_service._tcp.local.");
+
+        // Assert that browse returns Ok, indicating success
+        assert!(receiver_result.is_ok());
+
+        // Retrieve the StubServiceEventReceiver
+        let receiver = receiver_result.unwrap();
+
+        // Receive an event from the receiver
+        let event_result = receiver.receive();
+
+        // Assert that we received an event successfully
+        assert!(event_result.is_ok());
+
+        // Check that the event is the expected AppServiceEvent
+        let event = event_result.unwrap();
+        assert_eq!(event, AppServiceEvent::SearchStarted("_test_service._tcp.local.".to_string()));
     }
 }
