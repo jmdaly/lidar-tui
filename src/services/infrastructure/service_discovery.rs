@@ -160,9 +160,8 @@ struct ServiceDiscovery<M: MdnsDiscoveryTrait<T>, T: ServiceEventReceiver> {
 }
 
 impl<M: MdnsDiscoveryTrait<T>, T: ServiceEventReceiver> ServiceDiscovery<M, T> {
-    pub fn browse(&self, service_type: &str) -> Result<MdnsServiceEventReceiver, Box<dyn Error>> {
-        // self.mdns_discovery.browse(service_type)
-        Err("Not implemented".into())
+    pub fn browse(&self, service_type: &str) -> Result<T, Box<dyn Error>> {
+        self.mdns_discovery.browse(service_type)
     }
 }
 
