@@ -7,6 +7,28 @@ use mdns_sd::ServiceDaemon;
 use mdns_sd::ServiceEvent;
 use mdns_sd::ServiceInfo;
 
+/// A wrapper around `ServiceInfo` to allow implementation of `PartialEq`.
+#[derive(Debug)]
+struct AppServiceInfo(ServiceInfo);
+
+impl From<ServiceInfo> for AppServiceInfo {
+    fn from(info: ServiceInfo) -> Self {
+        AppServiceInfo(info)
+    }
+}
+
+impl PartialEq for AppServiceInfo {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.get_fullname() == other.0.get_fullname()
+            && self.0.get_hostname() == other.0.get_hostname()
+            && self.0.get_port() == other.0.get_port()
+            && self.0.get_addresses() == other.0.get_addresses()
+            && self.0.get_properties() == other.0.get_properties()
+    }
+}
+
+impl Eq for AppServiceInfo {}
+
 /// An enumeration of service discovery events.
 ///
 /// `AppServiceEvent` is an interface wrapper over the [`ServiceEvent`](mdns_sd::ServiceEvent) enumeration
@@ -15,7 +37,7 @@ use mdns_sd::ServiceInfo;
 enum AppServiceEvent {
     SearchStarted(String),
     ServiceFound(String, String),
-    ServiceResolved(ServiceInfo),
+    ServiceResolved(AppServiceInfo),
     ServiceRemoved(String, String),
     SearchStopped(String),
 }
@@ -30,7 +52,7 @@ impl From<ServiceEvent> for AppServiceEvent {
             ServiceEvent::ServiceFound(service_type, name) => {
                 AppServiceEvent::ServiceFound(service_type, name)
             }
-            ServiceEvent::ServiceResolved(info) => AppServiceEvent::ServiceResolved(info),
+            ServiceEvent::ServiceResolved(info) => AppServiceEvent::ServiceResolved(AppServiceInfo::from(info)),
             ServiceEvent::ServiceRemoved(service_type, name) => {
                 AppServiceEvent::ServiceRemoved(service_type, name)
             }
